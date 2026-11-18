@@ -30,6 +30,7 @@ COLOR_PALETTE: Tuple[str, ...] = (
     "\033[94m",  # Bright Blue
 )
 RESET_COLOR: str = "\033[0m"
+MAX_DISPLAYED_LINES: int = 10
 
 
 def build_argument_parser() -> argparse.ArgumentParser:
@@ -93,13 +94,6 @@ def build_argument_parser() -> argparse.ArgumentParser:
         action="store_true",
         default=False,
         help="Выводить время выполнения поиска",
-    )
-    parser.add_argument(
-        "-A",
-        "--all",
-        action="store_true",
-        default=False,
-        help="Показать все строки с совпадениями без ограничения в 10 строк",
     )
     return parser
 
@@ -206,9 +200,8 @@ def print_colored_output(
     text: str,
     intervals: List[Tuple[int, int, str]],
     use_color: bool,
-    max_lines: Optional[int] = 10,
 ) -> None:
-    """Выводит строки с найденными совпадениями с опциональным лимитом max_lines."""
+    """Выводит строки с найденными совпадениями (не более MAX_DISPLAYED_LINES строк)."""
     if not intervals:
         return
 
@@ -225,20 +218,16 @@ def print_colored_output(
     )
 
     print("\nНайденные фрагменты текста:")
-    displayed_indices = (
-        matching_indices[:max_lines]
-        if max_lines is not None
-        else matching_indices
-    )
+    displayed_indices = matching_indices[:MAX_DISPLAYED_LINES]
     for line_idx in displayed_indices:
         highlighted = highlight_line(
             lines[line_idx], line_offsets[line_idx], intervals, use_color
         )
         print(f"[{line_idx + 1:3d}] {highlighted}")
 
-    if max_lines is not None and len(matching_indices) > max_lines:
+    if len(matching_indices) > MAX_DISPLAYED_LINES:
         print(
-            f"... (показано первые {max_lines} строк с совпадениями "
+            f"... (показано первые {MAX_DISPLAYED_LINES} строк с совпадениями "
             f"из {len(matching_indices)})"
         )
 
@@ -278,7 +267,6 @@ def main() -> None:
         text=source_text,
         intervals=matched_intervals,
         use_color=not args.no_color,
-        max_lines=None if args.all else 10,
     )
 
 
