@@ -7,7 +7,17 @@
 import functools
 import logging
 import time
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    Union,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +39,25 @@ def log_execution_time(func: Callable[..., Any]) -> Callable[..., Any]:
         return result
 
     return wrapper
+
+
+def deduplicate_patterns(
+    patterns: Sequence[str],
+    case_sensitivity: bool = False,
+) -> List[str]:
+    """Удаляет повторяющиеся подстроки, сохраняя исходный порядок.
+
+    При поиске без учета регистра подстроки, отличающиеся только регистром,
+    также считаются повторами.
+    """
+    seen: Set[str] = set()
+    unique_patterns: List[str] = []
+    for pattern in patterns:
+        key = pattern if case_sensitivity else pattern.lower()
+        if key not in seen:
+            seen.add(key)
+            unique_patterns.append(pattern)
+    return unique_patterns
 
 
 def compute_shift_table(pattern: str) -> Dict[str, int]:
@@ -117,7 +146,11 @@ def search(
         )
 
     is_single = isinstance(sub_string, str)
-    patterns = [sub_string] if is_single else list(sub_string)
+    patterns = (
+        [sub_string]
+        if is_single
+        else deduplicate_patterns(sub_string, case_sensitivity)
+    )
 
     search_text = string if case_sensitivity else string.lower()
     search_patterns = [p if case_sensitivity else p.lower() for p in patterns]
@@ -130,7 +163,10 @@ def search(
         all_matches.sort(key=lambda item: (-item[0], item[1]))
 
     if count is not None:
-        all_matches = all_matches[:count]
+        if count <= 0:
+            all_matches = []
+        else:
+            all_matches = all_matches[:count]
 
     if is_single:
         if not all_matches:

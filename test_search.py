@@ -88,6 +88,17 @@ TEST_SEARCH_FEW_SUBSTR = [
     ('ababbababa', ('aba', 'bba'), True, 'first', 2, {'aba': (0, ), 'bba': (3, )}),
     ('ababbababa', ('aba', 'bba'), False, 'last', 1, {'aba': (7, ), 'bba': None}),
     ('ababbababa', ('aba', 'bba'), True, 'last', 10, {'aba': (7, 5, 0), 'bba': (3, )}),
+
+    # Повторяющиеся подстроки не должны дублировать совпадения
+    ('aaa', ('a', 'a'), False, 'first', 2, {'a': (0, 1)}),
+    ('aaa', ('a', 'a'), False, 'last', 2, {'a': (2, 1)}),
+    ('aaa', ('a', 'a'), False, 'first', 10, {'a': (0, 1, 2)}),
+    ('aaa', ('a', 'b', 'a'), False, 'first', 10, {'a': (0, 1, 2), 'b': None}),
+    ('aaa', ('ab', 'ab'), False, 'first', 5, {'ab': None}),
+
+    # Без учета регистра повторами считаются подстроки, различающиеся регистром
+    ('aAa', ('A', 'a'), False, 'first', 10, {'A': (0, 1, 2)}),
+    ('aAa', ('A', 'a'), True, 'first', 10, {'A': (1, ), 'a': (0, 2)}),
 ]
 
 

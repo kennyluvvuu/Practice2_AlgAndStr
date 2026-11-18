@@ -18,7 +18,7 @@ import logging
 import sys
 from typing import Dict, List, Optional, Sequence, Tuple, Union
 
-from search import search
+from search import deduplicate_patterns, search
 
 # Палитра ANSI-цветов для выделения различных подстрок
 COLOR_PALETTE: Tuple[str, ...] = (
@@ -252,8 +252,13 @@ def main() -> None:
         logging.basicConfig(level=logging.INFO, format="%(message)s")
 
     source_text = read_source_text(args)
+    unique_patterns = deduplicate_patterns(
+        args.pattern, args.case_sensitive
+    )
     pattern_arg: Union[str, List[str]] = (
-        args.pattern[0] if len(args.pattern) == 1 else args.pattern
+        unique_patterns[0]
+        if len(unique_patterns) == 1
+        else unique_patterns
     )
 
     search_result = search(
@@ -266,7 +271,9 @@ def main() -> None:
 
     print(f"Результат поиска: {search_result}")
 
-    matched_intervals = extract_matched_intervals(args.pattern, search_result)
+    matched_intervals = extract_matched_intervals(
+        unique_patterns, search_result
+    )
     print_colored_output(
         text=source_text,
         intervals=matched_intervals,
